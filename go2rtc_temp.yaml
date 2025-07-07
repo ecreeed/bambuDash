@@ -1,0 +1,6 @@
+streams:
+  192.168.50.227: rtsps://bblp:38e36c0d@192.168.50.227:322/streaming/live/1
+  192.168.50.38: rtsps://bblp:f22157b8@192.168.50.38:322/streaming/live/1
+  192.168.50.141: rtsps://bblp:a3a8fde8@192.168.50.141:322/streaming/live/1
+log:
+  level: error  # default level
