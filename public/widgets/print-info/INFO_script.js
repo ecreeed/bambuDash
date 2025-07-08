@@ -49,17 +49,12 @@ async function updateUI(telemetryObject) {
     const hours = futureTime.getHours();
     const minutes = futureTime.getMinutes();
 
-    // Determine AM or PM suffix
-    const ampm = hours >= 12 ? "pm" : "am";
-
-    // Format hours for 12-hour format and handle midnight/noon cases
-    const formattedHours = hours % 12 === 0 ? 12 : hours % 12;
-
-    // Ensure minutes are two digits
-    const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+    // Format as 24-hour time (HH:MM)
+    const formattedHours = hours.toString().padStart(2, '0');
+    const formattedMinutes = minutes.toString().padStart(2, '0');
 
     // Format the future time
-    const formattedTime = `${formattedHours}:${formattedMinutes}${ampm}`;
+    const formattedTime = `${formattedHours}:${formattedMinutes}`;
 
     log(formattedTime);
 

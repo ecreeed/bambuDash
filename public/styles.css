@@ -607,21 +607,7 @@ p {
   background: #f39c12;
 }
 
-/* Printer Overview */
-.printer-overview {
-  margin-bottom: 15px;
-  display: flex;
-  justify-content: center;
-}
 
-.overview-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  padding: 0 20px;
-  max-width: 1200px;
-  width: 100%;
-}
 
 .printer-card {
   background: #1a1a1a;
@@ -823,7 +809,7 @@ p {
   background: #000;
   border-radius: 8px;
   overflow: hidden;
-  min-height: 400px;
+  min-height: 40px;
 }
 
 .video-placeholder {
@@ -901,15 +887,15 @@ p {
   margin: 0 auto;
   max-width: 1400px;
   padding: 0 16px;
-  padding-top: 80px;
+  padding-top: 60px;
   display: block;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .main-printer-grid .printer-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
   width: 100%;
 }
 
@@ -917,8 +903,8 @@ p {
   background: #1a1a1a;
   border: 2px solid #333;
   border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 20px;
+  padding: 16px;
+  margin-bottom: 16px;
   position: relative;
   transition: all 0.3s ease;
   overflow: visible;
@@ -937,13 +923,13 @@ p {
   border: 4px solid #1a1a1a;
 }
 
-.main-printer-grid .printer-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 10px; }
-.main-printer-grid .status-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-.main-printer-grid .status-label { font-size: 1.1rem; font-weight: 500; letter-spacing: 1px; }
-.main-printer-grid .percent-label { font-size: 1.1rem; font-weight: 600; color: #4caf50; }
-.main-printer-grid .progress { width: 100%; height: 18px; background: #333; border-radius: 9px; overflow: hidden; margin-bottom: 16px; }
-.main-printer-grid .progress-bar { background: linear-gradient(90deg, #ff8c00, #ffa500); height: 100%; transition: width 0.5s; font-weight: 600; color: #fff; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 1rem; }
-.main-printer-grid .info-row { margin-bottom: 6px; }
+.main-printer-grid .printer-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; }
+.main-printer-grid .status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.main-printer-grid .status-label { font-size: 1rem; font-weight: 500; letter-spacing: 1px; }
+.main-printer-grid .percent-label { font-size: 1rem; font-weight: 600; color: #4caf50; }
+.main-printer-grid .progress { width: 100%; height: 16px; background: #333; border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
+.main-printer-grid .progress-bar { background: linear-gradient(90deg, #ff8c00, #ffa500); height: 100%; transition: width 0.5s; font-weight: 600; color: #fff; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; font-size: 0.9rem; }
+.main-printer-grid .info-row { margin-bottom: 4px; }
 .main-printer-grid .label { color: #aaa; font-size: 0.98rem; }
 .main-printer-grid .value { 
   color: #ffffff; 
@@ -965,8 +951,8 @@ p {
 }
 
 .main-printer-grid .printer-card, .printer-card {
-  min-height: 340px;
-  padding: 40px 32px 32px 32px;
+  min-height: 300px;
+  padding: 24px 20px 20px 20px;
   box-shadow: 0 6px 32px #000a;
   border: none;
   text-align: center;
@@ -1004,12 +990,12 @@ p {
 }
 
 .main-printer-grid .printer-title, .printer-title {
-  font-size: 2.2rem;
+  font-size: 1.8rem;
   font-weight: 800;
   color: #fff;
   text-shadow: 0 2px 8px #000, 0 0 4px #ff0;
   letter-spacing: 0.04em;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   text-align: center;
   width: 100%;
 }
@@ -1018,20 +1004,36 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 8px;
   width: 100%;
 }
 
 .main-printer-grid .info-row, .info-row {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   text-align: center;
   width: 100%;
 }
 
+.main-printer-grid .video-container {
+  margin-top: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #222;
+  width: 100%;
+}
+
+.main-printer-grid .video-container video {
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
 .main-printer-grid {
   max-width: 1800px;
-  margin-top: 60px;
+  margin-top: 40px;
 }
 
 /* Progress bar green at 100% (was yellow) */
