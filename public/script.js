@@ -26,7 +26,7 @@ let updateInterval;
 // Initialize the multi-printer dashboard
 $(document).ready(function() {
     loadPrinters();
-    setInterval(loadPrinters, 5000); // Refresh printer list every 5 seconds
+    setInterval(loadPrinters, 15000); // Reduced from 5 seconds to 15 seconds to reduce server load
 });
 
 // Load printers and their status
@@ -36,7 +36,6 @@ async function loadPrinters() {
         if (response.ok) {
             printers = await response.json();
             updatePrinterTabs();
-            updatePrinterOverview();
             
             // Load data for all printers
             await loadAllPrinterData();
@@ -76,13 +75,9 @@ function updatePrinterTabs() {
 }
 
 // Update printer overview cards
-function updatePrinterOverview() {
-    const overviewContainer = $('#printerOverview');
-    overviewContainer.empty();
-    
-    // Remove the dashboard selector buttons section entirely
-    // The progress bar tiles will now serve as the dashboard selector
-}
+
+
+
 
 // Load data for all printers
 async function loadAllPrinterData() {
@@ -115,9 +110,6 @@ function switchPrinter(printerId) {
     
     // Load specific printer data
     loadPrinterData(printerId);
-    
-    // Initialize video feed for the selected printer
-    initializeVideoFeed(printerId);
 }
 
 // Load data for a specific printer
@@ -216,11 +208,6 @@ function updatePrinterDashboard(printerId, data) {
             };
         }
         // --- END AMS transformation ---
-        // --- Video URL ---
-        if (data.print.ipcam && data.print.ipcam.rtsp_url) {
-            data.videoUrl = data.print.ipcam.rtsp_url;
-        }
-        // --- END Video URL ---
         // --- Lights ---
         if (Array.isArray(data.print.lights_report)) {
             data.lights = data.print.lights_report.map(l => ({ node: l.node, mode: l.mode }));
@@ -248,37 +235,6 @@ function createPrinterDashboard(printerId) {
                 <div class="printer-info">
                     <span>IP: ${printer.url}</span>
                     <span>Type: ${printer.type}</span>
-                </div>
-            </div>
-            
-            <!-- Video Feed Section -->
-            <div class="video-section">
-                <div class="video-header">
-                    <h3>Live Video Feed</h3>
-                    <div class="video-controls">
-                        <button class="video-btn" onclick="toggleVideoFeed('${printerId}')" id="video-toggle-${printerId}">
-                            <span class="material-symbols-outlined">play_arrow</span> Start Video
-                        </button>
-                        <button class="video-btn" onclick="refreshVideoFeed('${printerId}')">
-                            <span class="material-symbols-outlined">refresh</span> Refresh
-                        </button>
-                        <button class="video-btn" onclick="openVideoFullscreen('${printerId}')">
-                            <span class="material-symbols-outlined">fullscreen</span> Fullscreen
-                        </button>
-                    </div>
-                </div>
-                <div class="video-container" id="video-container-${printerId}">
-                    <div class="video-placeholder" id="video-placeholder-${printerId}">
-                        <span class="material-symbols-outlined">videocam_off</span>
-                        <p>Video feed not started</p>
-                        <p class="video-url">URL: http://${printer.url}/video</p>
-                    </div>
-                    <iframe id="video-frame-${printerId}" 
-                            src="" 
-                            frameborder="0" 
-                            allowfullscreen 
-                            style="display: none; width: 100%; height: 400px;">
-                    </iframe>
                 </div>
             </div>
             
@@ -438,100 +394,9 @@ function createPrinterDashboard(printerId) {
     $('#printerDashboards').append(dashboard);
 }
 
-// Video feed functions
-function initializeVideoFeed(printerId) {
-    const printer = printers.find(p => p.id === printerId);
-    if (!printer) return;
-    
-    // Update video URL in placeholder
-    $(`#video-placeholder-${printerId} .video-url`).text(`URL: http://${printer.url}/video`);
-    
-    // Check video feed availability
-    checkVideoStatus(printerId);
-}
-
-function checkVideoStatus(printerId) {
-    fetch(`/printer/${printerId}/video-status`)
-        .then(response => response.json())
-        .then(data => {
-            const placeholder = $(`#video-placeholder-${printerId}`);
-            if (data.available) {
-                placeholder.find('p').first().text('Video feed available');
-                placeholder.find('.material-symbols-outlined').text('videocam');
-                placeholder.find('.material-symbols-outlined').css('color', '#51a34f');
-            } else {
-                placeholder.find('p').first().text('Video feed not available');
-                placeholder.find('.material-symbols-outlined').text('videocam_off');
-                placeholder.find('.material-symbols-outlined').css('color', '#e74c3c');
-            }
-        })
-        .catch(error => {
-            console.error('Error checking video status:', error);
-            const placeholder = $(`#video-placeholder-${printerId}`);
-            placeholder.find('p').first().text('Video feed error');
-            placeholder.find('.material-symbols-outlined').text('error');
-            placeholder.find('.material-symbols-outlined').css('color', '#e74c3c');
-        });
-}
-
-function toggleVideoFeed(printerId) {
-    const printer = printers.find(p => p.id === printerId);
-    if (!printer) return;
-    
-    const videoFrame = $(`#video-frame-${printerId}`);
-    const videoPlaceholder = $(`#video-placeholder-${printerId}`);
-    const toggleBtn = $(`#video-toggle-${printerId}`);
-    
-    if (videoFrame.is(':visible')) {
-        // Stop video
-        videoFrame.hide();
-        videoPlaceholder.show();
-        toggleBtn.html('<span class="material-symbols-outlined">play_arrow</span> Start Video');
-    } else {
-        // Start video using proxy endpoint
-        const videoUrl = `/printer/${printerId}/video`;
-        videoFrame.attr('src', videoUrl);
-        videoFrame.show();
-        videoPlaceholder.hide();
-        toggleBtn.html('<span class="material-symbols-outlined">stop</span> Stop Video');
-    }
-}
-
-function refreshVideoFeed(printerId) {
-    const videoFrame = $(`#video-frame-${printerId}`);
-    const currentSrc = videoFrame.attr('src');
-    
-    if (currentSrc) {
-        videoFrame.attr('src', '');
-        setTimeout(() => {
-            videoFrame.attr('src', currentSrc);
-        }, 100);
-    }
-    
-    // Also refresh video status
-    checkVideoStatus(printerId);
-}
-
-function openVideoFullscreen(printerId) {
-    const printer = printers.find(p => p.id === printerId);
-    if (!printer) return;
-    
-    const videoUrl = `/printer/${printerId}/video`;
-    const fullscreenWindow = window.open(videoUrl, '_blank', 'width=800,height=600,scrollbars=no,resizable=yes');
-    
-    if (fullscreenWindow) {
-        fullscreenWindow.focus();
-    }
-}
-
 // Update dashboard content with printer data
 function updateDashboardContent(printerId, data) {
     if (!data || data.error) return;
-    
-    // Video feed
-    if (data.videoUrl) {
-        $(`#video-feed-${printerId}`).attr('src', data.videoUrl);
-    }
 
     // Print status
     if (data.print) {
@@ -593,14 +458,7 @@ function updateDashboardContent(printerId, data) {
         // Calculate ETA if mc_remaining_time is present
         let etaText = '...';
         if (printData.mc_remaining_time !== undefined && printData.mc_remaining_time !== null && printData.mc_remaining_time > 0) {
-            const now = new Date();
-            const etaDate = new Date(now.getTime() + printData.mc_remaining_time * 60 * 1000);
-            const hours = etaDate.getHours();
-            const minutes = etaDate.getMinutes();
-            const ampm = hours >= 12 ? 'pm' : 'am';
-            const formattedHours = hours % 12 === 0 ? 12 : hours % 12;
-            const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-            etaText = `${formattedHours}:${formattedMinutes}${ampm}`;
+            etaText = calculateCompletionTime(printData.mc_remaining_time);
         } else if (printStatus === 'FINISH') {
             etaText = 'Done';
         } else if (printStatus === 'FAILED') {
@@ -739,6 +597,40 @@ function getStatusClass(status) {
         case 'error': return 'status-error';
         default: return 'status-unknown';
     }
+}
+
+// Helper function to calculate completion time in 24-hour format
+function calculateCompletionTime(remainingMinutes) {
+    if (!remainingMinutes || remainingMinutes <= 0) {
+        return '...';
+    }
+    
+    const now = new Date();
+    const completionDate = new Date(now.getTime() + remainingMinutes * 60 * 1000);
+    const hours = completionDate.getHours();
+    const minutes = completionDate.getMinutes();
+    
+    // Format as 24-hour time (HH:MM)
+    const formattedHours = hours.toString().padStart(2, '0');
+    const formattedMinutes = minutes.toString().padStart(2, '0');
+    
+    return `${formattedHours}:${formattedMinutes}`;
+}
+
+// Helper function to format remaining time as HH:MM
+function formatRemainingTime(remainingMinutes) {
+    if (!remainingMinutes || remainingMinutes <= 0) {
+        return '';
+    }
+    
+    const hours = Math.floor(remainingMinutes / 60);
+    const minutes = remainingMinutes % 60;
+    
+    // Format as HH:MM
+    const formattedHours = hours.toString().padStart(2, '0');
+    const formattedMinutes = minutes.toString().padStart(2, '0');
+    
+    return `${formattedHours}:${formattedMinutes}`;
 }
 
 // Start periodic updates
@@ -1589,43 +1481,147 @@ async function fetchAllPrintersData() {
 function renderMainPrinterGrid(printersData) {
     const gridContainer = document.getElementById('mainPrinterGrid');
     if (!gridContainer) return;
-    let html = '<div class="printer-grid">';
-    if (!printersData || Object.keys(printersData).length === 0) {
-        html += '<div>No printer data available.</div>';
-    } else {
-        Object.entries(printersData).forEach(([printerId, data]) => {
-            // Get the actual printer name from the printers array
-            const printer = printers.find(p => p.id === printerId);
-            let name = printer?.name || data?.print?.printer_name || data?.name || printerId;
-            let status = data?.print?.gcode_state || data?.print?.print_status || 'UNKNOWN';
-            // Use mc_percent for actual progress, fallback to percent if mc_percent is not available
-            let percent = data?.print?.mc_percent !== undefined ? parseInt(data.print.mc_percent) : 
-                         (data?.print?.percent !== undefined ? parseInt(data.print.percent) : 0);
-            let eta = data?.print?.mc_remaining_time ? 
-                     convertMinutesToReadableTime(data.print.mc_remaining_time) : 
-                     (data?.print?.eta || '...');
-            let model = data?.print?.subtask_name || data?.print?.gcode_file || data?.print?.mc_filename || '...';
-            
-            // Determine progress bar color class and card class
-            let progressBarClass = percent === 100 ? 'progress-bar yellow' : 'progress-bar';
-            let cardClass = percent === 100 ? 'printer-card yellow' : 'printer-card';
-            
-            html += `
-                <div class="${cardClass} dashboard-tile" data-printer-id="${printerId}" style="--progress: ${percent}; cursor: pointer;" onclick="switchPrinter('${printerId}')">
-                    <div class="printer-title">${name}</div>
-                    <div class="status-row">
-                        <span class="status-label">${status}</span>
-                        <span class="percent-label">${percent}%</span>
+    
+    // Check if grid already exists
+    let grid = gridContainer.querySelector('.printer-grid');
+    if (!grid) {
+        // First time rendering - create the full structure
+        let html = '<div class="printer-grid">';
+        if (!printersData || Object.keys(printersData).length === 0) {
+            html += '<div>No printer data available.</div>';
+        } else {
+            Object.entries(printersData).forEach(([printerId, data]) => {
+                // Get the actual printer name from the printers array
+                const printer = printers.find(p => p.id === printerId);
+                let name = printer?.name || data?.print?.printer_name || data?.name || printerId;
+                let ip = printer.url;
+                let status = data?.print?.gcode_state || data?.print?.print_status || 'UNKNOWN';
+                let percent = data?.print?.mc_percent !== undefined ? parseInt(data.print.mc_percent) : 
+                             (data?.print?.percent !== undefined ? parseInt(data.print.percent) : 0);
+                let eta = data?.print?.mc_remaining_time ? 
+                         calculateCompletionTime(data.print.mc_remaining_time) : 
+                         (data?.print?.eta || '...');
+                let remainingTime = data?.print?.mc_remaining_time ? 
+                                  formatRemainingTime(data.print.mc_remaining_time) : 
+                                  '';
+                let model = data?.print?.subtask_name || data?.print?.gcode_file || data?.print?.mc_filename || '...';
+                
+                let progressBarClass = percent === 100 ? 'progress-bar yellow' : 'progress-bar';
+                let cardClass = percent === 100 ? 'printer-card yellow' : 'printer-card';
+                
+                html += `
+                    <div class="${cardClass} dashboard-tile" data-printer-id="${printerId}" style="--progress: ${percent}; cursor: pointer;" onclick="switchPrinter('${printerId}')">
+                        <div class="printer-title">${name}</div>
+                        <div class="status-row">
+                            <span class="status-label">${status}</span>
+                            <span class="percent-label">${percent}%</span>
+                        </div>
+                        <div class="info-row"><span class="label">ETA:</span> <span class="value">${eta}</span>${remainingTime ? `<span style="color: gray; margin-left: 8px;">(${remainingTime})</span>` : ''}</div>
+                        <div class="video-container">
+                            <iframe src="http://localhost:1984/stream.html?src=${ip}"></iframe>
+                        </div>
+                        <div class="info-row"><span class="label">Model:</span> <span class="value">${model}</span></div>
+                        
                     </div>
-                    <div class="progress"><div class="${progressBarClass}" style="width: ${percent}%;">&nbsp;</div></div>
-                    <div class="info-row"><span class="label">ETA:</span> <span class="value">${eta}</span></div>
-                    <div class="info-row"><span class="label">Model:</span> <span class="value">${model}</span></div>
-                </div>
-            `;
-        });
+                `;
+            });
+        }
+        html += '</div>';
+        gridContainer.innerHTML = html;
+    } else {
+        // Update existing grid - preserve video iframes
+        if (!printersData || Object.keys(printersData).length === 0) {
+            grid.innerHTML = '<div>No printer data available.</div>';
+        } else {
+            Object.entries(printersData).forEach(([printerId, data]) => {
+                const printer = printers.find(p => p.id === printerId);
+                let name = printer?.name || data?.print?.printer_name || data?.name || printerId;
+                let status = data?.print?.gcode_state || data?.print?.print_status || 'UNKNOWN';
+                let percent = data?.print?.mc_percent !== undefined ? parseInt(data.print.mc_percent) : 
+                             (data?.print?.percent !== undefined ? parseInt(data.print.percent) : 0);
+                let eta = data?.print?.mc_remaining_time ? 
+                         calculateCompletionTime(data.print.mc_remaining_time) : 
+                         (data?.print?.eta || '...');
+                let remainingTime = data?.print?.mc_remaining_time ? 
+                                  formatRemainingTime(data.print.mc_remaining_time) : 
+                                  '';
+                let model = data?.print?.subtask_name || data?.print?.gcode_file || data?.print?.mc_filename || '...';
+                
+                let progressBarClass = percent === 100 ? 'progress-bar yellow' : 'progress-bar';
+                let cardClass = percent === 100 ? 'printer-card yellow' : 'printer-card';
+                
+                // Find existing card or create new one
+                let card = grid.querySelector(`[data-printer-id="${printerId}"]`);
+                if (!card) {
+                    // Create new card with video iframe
+                    let ip = printer.url;
+                    card = document.createElement('div');
+                    card.className = `${cardClass} dashboard-tile`;
+                    card.setAttribute('data-printer-id', printerId);
+                    card.style.setProperty('--progress', percent);
+                    card.style.cursor = 'pointer';
+                    card.onclick = () => switchPrinter(printerId);
+                    
+                    card.innerHTML = `
+                        <div class="printer-title">${name}</div>
+                        <div class="status-row">
+                            <span class="status-label">${status}</span>
+                            <span class="percent-label">${percent}%</span>
+                        </div>
+                        <div class="progress"><div class="${progressBarClass}" style="width: ${percent}%;">&nbsp;</div></div>
+                        <div class="info-row"><span class="label">ETA:</span> <span class="value">${eta}</span>${remainingTime ? `<span style="color: gray; margin-left: 8px;">(${remainingTime})</span>` : ''}</div>
+                        <div class="info-row"><span class="label">Model:</span> <span class="value">${model}</span></div>
+                        <div class="video-container">
+                            <iframe src="http://localhost:1984/stream.html?src=${ip}" autoplay muted loop></iframe>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                } else {
+                    // Update existing card - preserve video iframe
+                    card.className = `${cardClass} dashboard-tile`;
+                    card.style.setProperty('--progress', percent);
+                    
+                    // Update text content only
+                    card.querySelector('.printer-title').textContent = name;
+                    card.querySelector('.status-label').textContent = status;
+                    card.querySelector('.percent-label').textContent = percent + '%';
+                    card.querySelector('.progress .progress-bar').className = progressBarClass;
+                    card.querySelector('.progress .progress-bar').style.width = percent + '%';
+                    
+                    // Update ETA row with completion time and remaining time
+                    const etaRow = card.querySelector('.info-row');
+                    const etaValue = etaRow.querySelector('.value');
+                    etaValue.textContent = eta;
+                    
+                    // Remove existing remaining time span if it exists
+                    const existingRemainingSpan = etaRow.querySelector('span[style*="color: gray"]');
+                    if (existingRemainingSpan) {
+                        existingRemainingSpan.remove();
+                    }
+                    
+                    // Add remaining time if available
+                    if (remainingTime) {
+                        const remainingSpan = document.createElement('span');
+                        remainingSpan.style.color = 'gray';
+                        remainingSpan.style.marginLeft = '8px';
+                        remainingSpan.textContent = `(${remainingTime})`;
+                        etaRow.appendChild(remainingSpan);
+                    }
+                    
+                    card.querySelectorAll('.info-row .value')[1].textContent = model;
+                }
+            });
+            
+            // Remove cards for printers that no longer exist
+            const existingCards = grid.querySelectorAll('[data-printer-id]');
+            existingCards.forEach(card => {
+                const cardPrinterId = card.getAttribute('data-printer-id');
+                if (!printersData[cardPrinterId]) {
+                    card.remove();
+                }
+            });
+        }
     }
-    html += '</div>';
-    gridContainer.innerHTML = html;
 }
 
 async function updateMainPrinterGrid() {
@@ -1635,5 +1631,5 @@ async function updateMainPrinterGrid() {
 
 document.addEventListener('DOMContentLoaded', function() {
     updateMainPrinterGrid();
-    setInterval(updateMainPrinterGrid, 1000);
+    setInterval(updateMainPrinterGrid, 10000); // Reduced from 1 second to 10 seconds to prevent video stuttering
 });
